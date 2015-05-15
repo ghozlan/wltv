@@ -1,0 +1,20 @@
+Scheme parameters:
+W = 1.000000, a = 1.587401, K^prime = 4
+Generating transmitter matrix
+Channel parameters:
+N_paths = 2
+h_wb = [1 0.5]
+tau = [0 2]
+alpha = [1 2]
+Generating channel matrix
+Generating receiver matrix
+Computing rate for optimal receiver
+(248.44 sec)
+Computing rate for expanded band receiver
+(91.04 sec)
+Computing rate for same band receiver with joint layer decoding
+(31.93 sec)
+Computing rate for same band receiver with individual layer decoding
+(16.82 sec)
+Collecting results
+Simulation runtime: 398.35 sec.

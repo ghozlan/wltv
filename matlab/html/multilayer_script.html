@@ -1,0 +1,511 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Multi-Layer Transmission in Wideband Linear Time-Varying Channels</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-05-15"><meta name="DC.source" content="multilayer_script.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>Multi-Layer Transmission in Wideband Linear Time-Varying Channels</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Choose Channel, Scheme and SNR Values</a></li><li><a href="#2">Open Log File</a></li><li><a href="#3">Simulation Paramters</a></li><li><a href="#4">Transmission Scheme Parameters</a></li><li><a href="#5">Generate the Transmitter Matrix</a></li><li><a href="#6">Channel Parameters</a></li><li><a href="#7">Generate the Channel Matrix</a></li><li><a href="#8">Generate the Receiver Matrix</a></li><li><a href="#9">Optimal Receiver</a></li><li><a href="#10">Multi-Layer Receiver, Expanded Bandwidth with Joint Decoding</a></li><li><a href="#11">Multi-Layer Receiver, Same Bandwidth with Joint Layer Decoding</a></li><li><a href="#12">Multi-Layer Receiver, Same Bandwidth with Individual Layer Decoding</a></li><li><a href="#13">Collect and Save Results</a></li><li><a href="#14">Plot Input and Output Spectra (broken down by layer)</a></li><li><a href="#15">Plot Information Rates</a></li></ul></div><h2>Choose Channel, Scheme and SNR Values<a name="1"></a></h2><pre class="codeinput">SNRdB_vec = 0:30;   <span class="comment">% signal-to-noise ratio (SNR) values in dB</span>
+
+channel_index = 5;  <span class="comment">% choose channel (from 1 to 5)</span>
+scheme_index = 1;   <span class="comment">% choose scheme (from 1 to 3)</span>
+</pre><h2>Open Log File<a name="2"></a></h2><pre class="codeinput">sim_start = tic;
+<span class="comment">% open log file (to keep track of the simulation)</span>
+<span class="keyword">global</span> log_file
+log_filename = [<span class="string">'log_channel'</span> num2str(channel_index) <span class="string">'_scheme'</span> num2str(scheme_index) <span class="string">'.txt'</span>];
+log_file = fopen(log_filename,<span class="string">'w'</span>);
+</pre><h2>Simulation Paramters<a name="3"></a></h2><pre class="codeinput">PASSBAND = true;            <span class="comment">% passband/baseband</span>
+T_TRANSMISSION = 32;        <span class="comment">% transmission time</span>
+F_samp = 64;                <span class="comment">% simulation sampling frequency</span>
+N0 = 1;                     <span class="comment">% one-sided power spectral density of noise</span>
+
+SIM.PASSBAND = PASSBAND;
+<span class="keyword">if</span>(PASSBAND)
+    SIM.REAL_DIM_PER_SYM = 1;
+<span class="keyword">else</span>
+    SIM.REAL_DIM_PER_SYM = 2;
+<span class="keyword">end</span>
+
+SIM.T_TRANSMISSION = T_TRANSMISSION;
+SIM.T_SIMULATION = 3*T_TRANSMISSION;
+SIM.df = 1.0/SIM.T_SIMULATION;
+
+SIM.F_samp = F_samp;
+SIM.dt = 1.0/F_samp;
+
+t = linspace(0,SIM.T_SIMULATION,SIM.T_SIMULATION/SIM.dt+1);
+t(end) = [];
+SIM.t = t;
+
+SIM.N0 = N0;
+
+SNR_vec = 10.^(SNRdB_vec/10);
+P_vec = SNR_vec * N0;
+</pre><h2>Transmission Scheme Parameters<a name="4"></a></h2><pre class="codeinput"><span class="comment">% SCHME format: [W (base), a (base), K_prime, fc (base)]</span>
+SCHEMES{1} = [1,2,3,1.5]; <span class="comment">%fc_base = 1.5*W_base;</span>
+SCHEMES{2} = [1,1.587401051968199,4,1.5]; <span class="comment">%fc_base = 1.5*W_base;</span>
+SCHEMES{3} = [7,1,1,4.5];
+SCH = SCHEMES{scheme_index};
+
+W_base = SCH(1); a_base = SCH(2); K_prime = SCH(3); fc_base = SCH(4);
+print_log(<span class="string">'Scheme parameters:\n'</span>)
+print_log(sprintf(<span class="string">'W = %f, a = %f, K^prime = %d\n'</span>, W_base, a_base, K_prime))
+</pre><pre class="codeoutput">Scheme parameters:
+W = 1.000000, a = 2.000000, K^prime = 3
+</pre><h2>Generate the Transmitter Matrix<a name="5"></a></h2><pre class="codeinput">print_log(<span class="string">'Generating transmitter matrix\n'</span>)
+[H_TX f_min f_max] = generate_vecs(W_base,a_base,K_prime,fc_base, SIM);
+B_TOTAL = f_max - f_min;
+fc = (f_max + f_min)/2;
+</pre><pre class="codeoutput">Generating transmitter matrix
+Layer 1: 2x32 (real) symbols
+Layer 2: 2x64 (real) symbols
+Layer 3: 2x128 (real) symbols
+f_min = 1.00000, f_max = 8.00000, B = 7.00000
+</pre><h2>Channel Parameters<a name="6"></a></h2><pre class="codeinput"><span class="comment">% Deterministic channels</span>
+<span class="comment">% Wideband linear time-varying channels</span>
+CH.N_paths = 2; CH.h_wb = [1 1/2]; CH.tau = [0 2]; CH.alpha = [1 2]; <span class="comment">%CHANNEL A</span>
+CHANNELS{1} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1/2]; CH.tau = [0 2]; CH.alpha = [1 1.587401051968199]; <span class="comment">% CHANNEL B</span>
+CHANNELS{2} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1.5]; CH.tau = [0 2]; CH.alpha = [1 2]; <span class="comment">%CHANNEL C</span>
+CHANNELS{3} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1.5]; CH.tau = [2 3]; CH.alpha = [1 2]; <span class="comment">%CHANNEL D</span>
+CHANNELS{4} = CH;
+CH.N_paths = 3; CH.h_wb = [1 -0.7 1.5]; CH.tau = [2 1 3]; CH.alpha = [1 1.25 2]; <span class="comment">%CHANNEL E</span>
+CHANNELS{5} = CH;
+
+CHANNEL_LABEL = {<span class="string">'A'</span>,<span class="string">'B'</span>,<span class="string">'C'</span>,<span class="string">'D'</span>,<span class="string">'E'</span>};
+
+CH = CHANNELS{channel_index};
+
+print_log(<span class="string">'Channel parameters:\n'</span>)
+fields = fieldnames(CH);
+<span class="keyword">for</span> i = 1:length(fields)
+    print_log( sprintf(<span class="string">'%s = %s\n'</span>, fields{i}, mat2str( getfield(CH,fields{i}) )) );
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Channel parameters:
+N_paths = 3
+h_wb = [1 -0.7 1.5]
+tau = [2 1 3]
+alpha = [1 1.25 2]
+</pre><h2>Generate the Channel Matrix<a name="7"></a></h2><pre class="codeinput">print_log(<span class="string">'Generating channel matrix\n'</span>)
+
+K0_t_tau = generate_ch_matrix(CH, SIM);
+
+H_CH = K0_t_tau * SIM.dt;
+</pre><pre class="codeoutput">Generating channel matrix
+</pre><h2>Generate the Receiver Matrix<a name="8"></a></h2><pre class="codeinput">print_log(<span class="string">'Generating receiver matrix\n'</span>)
+<span class="comment">% Make receiver take into account the max delay (seems to be not critical)</span>
+SIM_RX = SIM;
+SIM_RX.T_TRANSMISSION = SIM.T_TRANSMISSION + max(CH.tau);
+<span class="comment">% For same band receiver</span>
+[H_RX f_min f_max] = generate_vecs(W_base,a_base,K_prime,fc_base, SIM_RX);
+<span class="comment">% For expanded band receiver</span>
+K = K_prime+1;
+[H_RX_EB f_min f_max] = generate_vecs(W_base,a_base,K,fc_base, SIM_RX);
+</pre><pre class="codeoutput">Generating receiver matrix
+Layer 1: 2x35 (real) symbols
+Layer 2: 2x70 (real) symbols
+Layer 3: 2x140 (real) symbols
+f_min = 1.00000, f_max = 8.00000, B = 7.00000
+Layer 1: 2x35 (real) symbols
+Layer 2: 2x70 (real) symbols
+Layer 3: 2x140 (real) symbols
+Layer 4: 2x280 (real) symbols
+f_min = 1.00000, f_max = 16.00000, B = 15.00000
+</pre><h2>Optimal Receiver<a name="9"></a></h2><pre class="codeinput">print_log(<span class="string">'Computing rate for optimal receiver\n'</span>)
+
+tic
+R_OPT = info_rate_optrx(H_TX, H_CH, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf(<span class="string">'(%.2f sec)\n'</span>,runtime))
+RUNTIMES.OPT = runtime;
+</pre><pre class="codeoutput">Computing rate for optimal receiver
+(135.58 sec)
+</pre><h2>Multi-Layer Receiver, Expanded Bandwidth with Joint Decoding<a name="10"></a></h2><pre class="codeinput">print_log(<span class="string">'Computing rate for expanded band receiver\n'</span>)
+
+tic
+R_EB = info_rate_expand(H_TX, H_CH, H_RX_EB, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf(<span class="string">'(%.2f sec)\n'</span>,runtime))
+RUNTIMES.EB = runtime;
+</pre><pre class="codeoutput">Computing rate for expanded band receiver
+(70.94 sec)
+</pre><h2>Multi-Layer Receiver, Same Bandwidth with Joint Layer Decoding<a name="11"></a></h2><pre class="codeinput">print_log(<span class="string">'Computing rate for same band receiver with joint layer decoding\n'</span>)
+
+tic
+R_SB_JLD = info_rate_expand(H_TX, H_CH, H_RX, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf(<span class="string">'(%.2f sec)\n'</span>,runtime))
+RUNTIMES.SB_JLD = runtime;
+</pre><pre class="codeoutput">Computing rate for same band receiver with joint layer decoding
+(20.69 sec)
+</pre><h2>Multi-Layer Receiver, Same Bandwidth with Individual Layer Decoding<a name="12"></a></h2><pre class="codeinput">print_log(<span class="string">'Computing rate for same band receiver with individual layer decoding\n'</span>)
+
+tic
+R_SB_ILD = info_rate_ild( H_TX, H_CH, H_RX, P_vec, SCHEMES{scheme_index}, SIM );
+runtime = toc;
+print_log(sprintf(<span class="string">'(%.2f sec)\n'</span>,runtime))
+RUNTIMES.SB_ILD = runtime;
+</pre><pre class="codeoutput">Computing rate for same band receiver with individual layer decoding
+(11.02 sec)
+</pre><h2>Collect and Save Results<a name="13"></a></h2><pre class="codeinput">print_log(<span class="string">'Collecting results\n'</span>)
+
+SNR_vec = P_vec/N0;
+SNRdB_vec = 10*log10(SNR_vec);
+
+DATA.SIM = SIM;
+DATA.SNRdB = SNRdB_vec;
+DATA.CHANNEL_PARAMS = CH;
+DATA.SCHEME_PARAMS = SCHEMES{scheme_index};
+DATA.RX.OPT   .RATE = R_OPT;
+DATA.RX.EB    .RATE = R_EB;
+DATA.RX.EB    .LABEL = sprintf(<span class="string">'EB (K=%d)'</span>,K);
+DATA.RX.SB_JLD.RATE = R_SB_JLD;
+DATA.RX.SB_ILD.RATE = R_SB_ILD;
+
+sim_runtime = toc(sim_start);
+DATA.RUNTIME = sim_runtime;
+
+keyword =  <span class="string">''</span>;
+timestamp = datestr(now,<span class="string">'HHMMSS'</span>);
+tail = [timestamp  keyword];
+root_filename = [<span class="string">'channel'</span> lower(CHANNEL_LABEL{channel_index}) <span class="string">'_'</span>];
+root_filename = [root_filename <span class="string">'scheme'</span> num2str(scheme_index) <span class="string">'_'</span>];
+data_filename = [root_filename tail];
+save(data_filename, <span class="string">'DATA'</span>);
+fprintf(<span class="string">'Output saved to file: %s\n'</span>,data_filename)
+
+print_log(sprintf(<span class="string">'Simulation runtime: %.2f sec.\n'</span>,sim_runtime))
+fclose(log_file);
+</pre><pre class="codeoutput">Collecting results
+Output saved to file: channele_scheme1_055339
+Simulation runtime: 244.53 sec.
+</pre><h2>Plot Input and Output Spectra (broken down by layer)<a name="14"></a></h2><pre class="codeinput">plot_spectrum(H_TX, H_CH, SCH, CH, SIM)
+
+fig_filename = [<span class="string">'SPECTRUM_'</span> <span class="string">'CH'</span> CHANNEL_LABEL{channel_index} <span class="string">'_SCH'</span> num2str(scheme_index) <span class="string">'.eps'</span>];
+print(<span class="string">'-depsc'</span>, fig_filename)
+</pre><img vspace="5" hspace="5" src="multilayer_script_01.png" alt=""> <h2>Plot Information Rates<a name="15"></a></h2><pre class="codeinput">LineWidth = 2;
+MarkerSize = 10;
+FontSize = 17;
+FontSizeLegend = 14;
+
+line_style = { <span class="string">'g*-'</span>, <span class="string">'bs-'</span>, <span class="string">'m+-'</span>, <span class="string">'rx-'</span>, <span class="string">'bo-'</span>};
+
+ch = [<span class="string">'CHANNEL'</span> CHANNEL_LABEL{channel_index}];
+sch = [<span class="string">'SCHEME'</span> num2str(scheme_index)];
+
+fig_index = 1000;
+set(figure(fig_index),<span class="string">'Name'</span>,<span class="string">'Rate (nats/sec) vs SNR (dB)'</span>)
+plot(SNRdB_vec,R_OPT,<span class="keyword">...</span>
+    line_style{1},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+hold <span class="string">on</span>
+plot(SNRdB_vec,R_EB,<span class="keyword">...</span>
+    line_style{2},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+plot(SNRdB_vec,R_SB_JLD,<span class="keyword">...</span>
+    line_style{3},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+plot(SNRdB_vec,R_SB_ILD,<span class="keyword">...</span>
+    line_style{4},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+hold <span class="string">off</span>
+title([<span class="string">'Channel '</span> CHANNEL_LABEL{channel_index} <span class="string">', Scheme '</span> num2str(scheme_index)])
+xlabel(<span class="string">'SNR (dB)'</span>,<span class="string">'FontSize'</span>,FontSize)
+ylabel(<span class="string">'Information Rates (nats/sec)'</span>,<span class="string">'FontSize'</span>,FontSize)
+legend(<span class="keyword">...</span>
+    <span class="string">'Optimal'</span>,<span class="keyword">...</span>
+    <span class="string">'EB, K=K^\prime+1'</span>,<span class="keyword">...</span>
+    <span class="string">'SB, JLD'</span>,<span class="keyword">...</span>
+    <span class="string">'SB, ILD'</span>,<span class="keyword">...</span>
+    <span class="string">'Location'</span>,<span class="string">'SouthEast'</span>)
+handles = get(fig_index,<span class="string">'Children'</span>);
+set(handles(1),<span class="string">'FontSize'</span>,FontSizeLegend);
+
+set(fig_index,<span class="string">'Position'</span>,[2*480 50 2*480 2*360]);figure(fig_index)
+
+fig_filename = [<span class="string">'RATE_'</span> ch <span class="string">'_'</span> sch <span class="string">'.eps'</span>];
+print(<span class="string">'-depsc'</span>, fig_filename)
+</pre><img vspace="5" hspace="5" src="multilayer_script_02.png" alt=""> <p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% Multi-Layer Transmission in Wideband Linear Time-Varying Channels
+
+%% Choose Channel, Scheme and SNR Values
+
+SNRdB_vec = 0:30;   % signal-to-noise ratio (SNR) values in dB
+
+channel_index = 5;  % choose channel (from 1 to 5)
+scheme_index = 1;   % choose scheme (from 1 to 3)
+
+%% Open Log File
+
+sim_start = tic;
+% open log file (to keep track of the simulation)
+global log_file
+log_filename = ['log_channel' num2str(channel_index) '_scheme' num2str(scheme_index) '.txt'];
+log_file = fopen(log_filename,'w');
+
+%% Simulation Paramters
+
+PASSBAND = true;            % passband/baseband
+T_TRANSMISSION = 32;        % transmission time
+F_samp = 64;                % simulation sampling frequency
+N0 = 1;                     % one-sided power spectral density of noise
+
+SIM.PASSBAND = PASSBAND;
+if(PASSBAND)
+    SIM.REAL_DIM_PER_SYM = 1;
+else
+    SIM.REAL_DIM_PER_SYM = 2;
+end
+
+SIM.T_TRANSMISSION = T_TRANSMISSION;
+SIM.T_SIMULATION = 3*T_TRANSMISSION;
+SIM.df = 1.0/SIM.T_SIMULATION;
+
+SIM.F_samp = F_samp;
+SIM.dt = 1.0/F_samp;
+
+t = linspace(0,SIM.T_SIMULATION,SIM.T_SIMULATION/SIM.dt+1);
+t(end) = [];
+SIM.t = t;
+
+SIM.N0 = N0;
+
+SNR_vec = 10.^(SNRdB_vec/10);
+P_vec = SNR_vec * N0; 
+
+%% Transmission Scheme Parameters
+
+% SCHME format: [W (base), a (base), K_prime, fc (base)]
+SCHEMES{1} = [1,2,3,1.5]; %fc_base = 1.5*W_base;
+SCHEMES{2} = [1,1.587401051968199,4,1.5]; %fc_base = 1.5*W_base;
+SCHEMES{3} = [7,1,1,4.5];
+SCH = SCHEMES{scheme_index};
+
+W_base = SCH(1); a_base = SCH(2); K_prime = SCH(3); fc_base = SCH(4);
+print_log('Scheme parameters:\n')
+print_log(sprintf('W = %f, a = %f, K^prime = %d\n', W_base, a_base, K_prime))
+
+%% Generate the Transmitter Matrix
+
+print_log('Generating transmitter matrix\n')
+[H_TX f_min f_max] = generate_vecs(W_base,a_base,K_prime,fc_base, SIM);
+B_TOTAL = f_max - f_min;
+fc = (f_max + f_min)/2;
+
+%% Channel Parameters 
+
+% Deterministic channels
+% Wideband linear time-varying channels
+CH.N_paths = 2; CH.h_wb = [1 1/2]; CH.tau = [0 2]; CH.alpha = [1 2]; %CHANNEL A
+CHANNELS{1} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1/2]; CH.tau = [0 2]; CH.alpha = [1 1.587401051968199]; % CHANNEL B
+CHANNELS{2} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1.5]; CH.tau = [0 2]; CH.alpha = [1 2]; %CHANNEL C
+CHANNELS{3} = CH;
+CH.N_paths = 2; CH.h_wb = [1 1.5]; CH.tau = [2 3]; CH.alpha = [1 2]; %CHANNEL D
+CHANNELS{4} = CH;
+CH.N_paths = 3; CH.h_wb = [1 -0.7 1.5]; CH.tau = [2 1 3]; CH.alpha = [1 1.25 2]; %CHANNEL E
+CHANNELS{5} = CH;
+
+CHANNEL_LABEL = {'A','B','C','D','E'};
+
+CH = CHANNELS{channel_index};
+
+print_log('Channel parameters:\n')
+fields = fieldnames(CH);
+for i = 1:length(fields)
+    print_log( sprintf('%s = %s\n', fields{i}, mat2str( getfield(CH,fields{i}) )) );
+end
+
+%% Generate the Channel Matrix
+
+print_log('Generating channel matrix\n')
+
+K0_t_tau = generate_ch_matrix(CH, SIM);
+
+H_CH = K0_t_tau * SIM.dt;
+
+%% Generate the Receiver Matrix
+
+print_log('Generating receiver matrix\n')
+% Make receiver take into account the max delay (seems to be not critical)
+SIM_RX = SIM;
+SIM_RX.T_TRANSMISSION = SIM.T_TRANSMISSION + max(CH.tau);
+% For same band receiver
+[H_RX f_min f_max] = generate_vecs(W_base,a_base,K_prime,fc_base, SIM_RX);
+% For expanded band receiver
+K = K_prime+1;
+[H_RX_EB f_min f_max] = generate_vecs(W_base,a_base,K,fc_base, SIM_RX);
+
+%% Optimal Receiver
+
+print_log('Computing rate for optimal receiver\n')
+
+tic
+R_OPT = info_rate_optrx(H_TX, H_CH, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf('(%.2f sec)\n',runtime))
+RUNTIMES.OPT = runtime;
+
+%% Multi-Layer Receiver, Expanded Bandwidth with Joint Decoding
+
+print_log('Computing rate for expanded band receiver\n')
+
+tic
+R_EB = info_rate_expand(H_TX, H_CH, H_RX_EB, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf('(%.2f sec)\n',runtime))
+RUNTIMES.EB = runtime;
+
+%% Multi-Layer Receiver, Same Bandwidth with Joint Layer Decoding
+
+print_log('Computing rate for same band receiver with joint layer decoding\n')
+
+tic
+R_SB_JLD = info_rate_expand(H_TX, H_CH, H_RX, P_vec, SCHEMES{scheme_index}, SIM);
+runtime = toc;
+print_log(sprintf('(%.2f sec)\n',runtime))
+RUNTIMES.SB_JLD = runtime;
+
+%% Multi-Layer Receiver, Same Bandwidth with Individual Layer Decoding
+
+print_log('Computing rate for same band receiver with individual layer decoding\n')
+
+tic
+R_SB_ILD = info_rate_ild( H_TX, H_CH, H_RX, P_vec, SCHEMES{scheme_index}, SIM );
+runtime = toc;
+print_log(sprintf('(%.2f sec)\n',runtime))
+RUNTIMES.SB_ILD = runtime;
+
+%% Collect and Save Results
+
+print_log('Collecting results\n')
+
+SNR_vec = P_vec/N0;
+SNRdB_vec = 10*log10(SNR_vec);
+
+DATA.SIM = SIM;
+DATA.SNRdB = SNRdB_vec;
+DATA.CHANNEL_PARAMS = CH;
+DATA.SCHEME_PARAMS = SCHEMES{scheme_index};
+DATA.RX.OPT   .RATE = R_OPT;
+DATA.RX.EB    .RATE = R_EB;
+DATA.RX.EB    .LABEL = sprintf('EB (K=%d)',K);
+DATA.RX.SB_JLD.RATE = R_SB_JLD;
+DATA.RX.SB_ILD.RATE = R_SB_ILD;
+
+sim_runtime = toc(sim_start);
+DATA.RUNTIME = sim_runtime;
+
+keyword =  '';
+timestamp = datestr(now,'HHMMSS');
+tail = [timestamp  keyword];
+root_filename = ['channel' lower(CHANNEL_LABEL{channel_index}) '_'];
+root_filename = [root_filename 'scheme' num2str(scheme_index) '_'];
+data_filename = [root_filename tail];
+save(data_filename, 'DATA');
+fprintf('Output saved to file: %s\n',data_filename)
+
+print_log(sprintf('Simulation runtime: %.2f sec.\n',sim_runtime))
+fclose(log_file);
+
+%% Plot Input and Output Spectra (broken down by layer)
+
+plot_spectrum(H_TX, H_CH, SCH, CH, SIM)
+
+fig_filename = ['SPECTRUM_' 'CH' CHANNEL_LABEL{channel_index} '_SCH' num2str(scheme_index) '.eps'];
+print('-depsc', fig_filename)
+
+%% Plot Information Rates
+
+LineWidth = 2;
+MarkerSize = 10;
+FontSize = 17;
+FontSizeLegend = 14;
+
+line_style = { 'g*-', 'bs-', 'm+-', 'rx-', 'bo-'};
+
+ch = ['CHANNEL' CHANNEL_LABEL{channel_index}];
+sch = ['SCHEME' num2str(scheme_index)];
+
+fig_index = 1000;
+set(figure(fig_index),'Name','Rate (nats/sec) vs SNR (dB)')
+plot(SNRdB_vec,R_OPT,...
+    line_style{1},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+hold on
+plot(SNRdB_vec,R_EB,...
+    line_style{2},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+plot(SNRdB_vec,R_SB_JLD,...
+    line_style{3},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+plot(SNRdB_vec,R_SB_ILD,...
+    line_style{4},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+hold off
+title(['Channel ' CHANNEL_LABEL{channel_index} ', Scheme ' num2str(scheme_index)])
+xlabel('SNR (dB)','FontSize',FontSize)
+ylabel('Information Rates (nats/sec)','FontSize',FontSize)        
+legend(...
+    'Optimal',...
+    'EB, K=K^\prime+1',...
+    'SB, JLD',...
+    'SB, ILD',...
+    'Location','SouthEast')
+handles = get(fig_index,'Children'); 
+set(handles(1),'FontSize',FontSizeLegend);
+
+set(fig_index,'Position',[2*480 50 2*480 2*360]);figure(fig_index)
+
+fig_filename = ['RATE_' ch '_' sch '.eps'];
+print('-depsc', fig_filename)
+
+##### SOURCE END #####
+--></body></html>

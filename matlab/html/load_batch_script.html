@@ -1,0 +1,374 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Load Files and Compare Information Rates</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-05-15"><meta name="DC.source" content="load_batch_script.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>Load Files and Compare Information Rates</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Get a batch of files (matching certain filename pattern)</a></li><li><a href="#2">Index the filenames by 'channel' and 'scheme'</a></li><li><a href="#3">Load results from files</a></li><li><a href="#4">Plot information rates</a></li><li><a href="#5">Comparing the information rates of two schemes</a></li></ul></div><h2>Get a batch of files (matching certain filename pattern)<a name="1"></a></h2><pre class="codeinput">path = <span class="string">'./'</span>;
+sim_file_pattern = <span class="string">'*.mat*'</span>;
+sim_file_list = dir([path sim_file_pattern]);
+</pre><h2>Index the filenames by 'channel' and 'scheme'<a name="2"></a></h2><pre class="codeinput">filenames = struct;
+<span class="keyword">for</span> j=1:length(sim_file_list)
+    filename = sim_file_list(j).name;
+    <span class="comment">% extract the channel and the scheme from the filename</span>
+    filename_ch = upper( filename(length(<span class="string">'channelx'</span>)) );
+    filename_sch = filename(length(<span class="string">'channelx_schemex'</span>));
+    s = sprintf(<span class="string">'File  %s : Channel %s, Scheme %s\n'</span>, filename, filename_ch, filename_sch );
+    fprintf(s)
+
+    <span class="comment">% store filenames in a dict indexed by channel and scheme</span>
+    filenames.(filename_ch).([<span class="string">'sch'</span> filename_sch]) = filename;
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">File  channela_scheme1_060314.mat : Channel A, Scheme 1
+File  channela_scheme2_061007.mat : Channel A, Scheme 2
+File  channele_scheme1_053430.mat : Channel E, Scheme 1
+File  channele_scheme1_054101.mat : Channel E, Scheme 1
+File  channele_scheme1_054357.mat : Channel E, Scheme 1
+File  channele_scheme1_054724.mat : Channel E, Scheme 1
+File  channele_scheme1_055339.mat : Channel E, Scheme 1
+File  channele_scheme2_061614.mat : Channel E, Scheme 2
+</pre><h2>Load results from files<a name="3"></a></h2><pre class="codeinput"><span class="comment">%CHANNEL_LIST = {'A','B','C','D','E'};</span>
+<span class="comment">%SCHEME_LIST = {1, 2, 3};</span>
+
+CHANNEL_LIST = {<span class="string">'A'</span>,<span class="string">'E'</span>};
+SCHEME_LIST = {1, 2};
+
+runtimes = [];
+RESULTS = struct;
+<span class="keyword">for</span> c = 1:length(CHANNEL_LIST)
+    ch_idx = CHANNEL_LIST{c};
+
+    RESULTS.([<span class="string">'CHANNEL'</span> ch_idx]) = struct;
+    <span class="keyword">for</span> s = 1:length(SCHEME_LIST)
+        sch_idx = SCHEME_LIST{s};
+        filename = filenames.(ch_idx).([<span class="string">'sch'</span> num2str(sch_idx)]);
+        fprintf(<span class="string">'Loading %s\n'</span>, filename)
+        load([path filename]);
+
+        <span class="comment">% extract the information rates</span>
+        RATES = struct;
+        RX_LIST = fieldnames(DATA.RX);
+        <span class="keyword">for</span> r = 1:length(RX_LIST)
+            RX = RX_LIST{r};
+            RATES.(RX) = DATA.RX.(RX).RATE;
+        <span class="keyword">end</span>
+
+        <span class="comment">% store results</span>
+        RESULTS.([<span class="string">'CHANNEL'</span> ch_idx]).([<span class="string">'SCHEME'</span> num2str(sch_idx)]) = RATES;
+
+        <span class="comment">%runtimes.append(DATA.get('RUNTIME')) % If no 'RUNTIME', *None* will be rerturned</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+RESULTS.SNRdB = DATA.SNRdB; <span class="comment">% store once, since we run all simulations for the same SNR values</span>
+SNRdB_vec = RESULTS.SNRdB;
+</pre><pre class="codeoutput">Loading channela_scheme1_060314.mat
+Loading channela_scheme2_061007.mat
+Loading channele_scheme1_055339.mat
+Loading channele_scheme2_061614.mat
+</pre><h2>Plot information rates<a name="4"></a></h2><pre class="codeinput">LineWidth = 2;
+MarkerSize = 10;
+FontSize = 17;
+FontSizeLegend = 14;
+
+line_style{1} = { <span class="string">'g*-'</span>, <span class="string">'bs-'</span>, <span class="string">'m+-'</span>, <span class="string">'rx-'</span>, <span class="string">'bo-'</span>};
+line_style{2} = { <span class="string">'g*-'</span>, <span class="string">'bs-'</span>, <span class="string">'m+-'</span>, <span class="string">'rx-'</span>, <span class="string">'bo-'</span>};
+line_style{3} = { <span class="string">'g*-'</span>, <span class="string">'bs-'</span>, <span class="string">'m+-'</span>, <span class="string">'rx-'</span>, <span class="string">'bo-'</span>};
+
+CHANNEL_LIST = {<span class="string">'A'</span>,<span class="string">'E'</span>};
+SCHEME_LIST = {1, 2};
+
+<span class="keyword">for</span> c=1:length(CHANNEL_LIST)
+    channel_index = CHANNEL_LIST{c};
+    ch = [<span class="string">'CHANNEL'</span> channel_index];
+    <span class="keyword">for</span> s=1:length(SCHEME_LIST)
+        scheme_index = SCHEME_LIST{s};
+        sch = [<span class="string">'SCHEME'</span> num2str(scheme_index)];
+
+        fig_index = 1000+s+c*length(SCHEME_LIST);
+        set(figure(fig_index),<span class="string">'Name'</span>,<span class="string">'Rate (nats/sec) vs SNR (dB)'</span>)
+        plot(SNRdB_vec,RESULTS.(ch).(sch).OPT,<span class="keyword">...</span>
+            line_style{scheme_index}{1},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+        hold <span class="string">on</span>
+        plot(SNRdB_vec,RESULTS.(ch).(sch).EB,<span class="keyword">...</span>
+            line_style{scheme_index}{2},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+        plot(SNRdB_vec,RESULTS.(ch).(sch).SB_JLD,<span class="keyword">...</span>
+            line_style{scheme_index}{3},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+        plot(SNRdB_vec,RESULTS.(ch).(sch).SB_ILD,<span class="keyword">...</span>
+            line_style{scheme_index}{4},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+        hold <span class="string">off</span>
+        title([<span class="string">'Channel '</span> channel_index <span class="string">', Scheme '</span> num2str(scheme_index)])
+        xlabel(<span class="string">'SNR (dB)'</span>,<span class="string">'FontSize'</span>,FontSize)
+        ylabel(<span class="string">'Information Rates (nats/sec)'</span>,<span class="string">'FontSize'</span>,FontSize)
+        legend(<span class="keyword">...</span>
+            <span class="string">'Optimal'</span>,<span class="keyword">...</span>
+            <span class="string">'EB, K=K^\prime+1'</span>,<span class="keyword">...</span>
+            <span class="string">'SB, JLD'</span>,<span class="keyword">...</span>
+            <span class="string">'SB, ILD'</span>,<span class="keyword">...</span>
+            <span class="string">'Location'</span>,<span class="string">'SouthEast'</span>)
+
+        handles = get(fig_index,<span class="string">'Children'</span>); set(handles(1),<span class="string">'FontSize'</span>,FontSizeLegend);
+
+        set(fig_index,<span class="string">'Position'</span>,[2*480 50 2*480 2*360]);figure(fig_index)
+
+        fig_filename = [<span class="string">'RATE_'</span> ch <span class="string">'_'</span> sch <span class="string">'.eps'</span>];
+        <span class="comment">%print('-depsc', fig_filename)</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="load_batch_script_01.png" alt=""> <img vspace="5" hspace="5" src="load_batch_script_02.png" alt=""> <img vspace="5" hspace="5" src="load_batch_script_03.png" alt=""> <img vspace="5" hspace="5" src="load_batch_script_04.png" alt=""> <h2>Comparing the information rates of two schemes<a name="5"></a></h2><pre class="codeinput">CHANNEL_LIST = {<span class="string">'A'</span>,<span class="string">'E'</span>};
+<span class="comment">%SCHEME_PAIR_LIST = {[1 2],[1 3],[2 3]};</span>
+SCHEME_PAIR_LIST = {[1 2]};
+
+<span class="keyword">for</span> c=1:length(CHANNEL_LIST)
+    channel_index = CHANNEL_LIST{c};
+    ch = [<span class="string">'CHANNEL'</span> channel_index];
+
+    <span class="keyword">for</span> index = 1:length(SCHEME_PAIR_LIST)
+        scheme_pair = SCHEME_PAIR_LIST{index};
+        line_style{1} = { <span class="string">'g*-'</span>, <span class="string">'bs-'</span>, <span class="string">'b+-'</span>, <span class="string">'rx-'</span>, <span class="string">'bo-'</span>};
+        line_style{2} = { <span class="string">'g*--'</span>, <span class="string">'bs--'</span>, <span class="string">'b+--'</span>, <span class="string">'rx--'</span>, <span class="string">'bo--'</span>};
+        <span class="keyword">for</span> s = 1:2
+            scheme_index = scheme_pair(s);
+            sch = [<span class="string">'SCHEME'</span> num2str(scheme_index)];
+            fig_index = 8000+index+c*length(SCHEME_PAIR_LIST);
+            figure(fig_index);
+            set(fig_index,<span class="string">'Name'</span>,<span class="string">'R (Nats) vs SNR (dB)'</span>)
+            plot(SNRdB_vec,RESULTS.(ch).(sch).SB_JLD,<span class="keyword">...</span>
+                line_style{s}{3},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+            title([<span class="string">'Channel '</span> channel_index])
+            xlabel(<span class="string">'SNR (dB)'</span>,<span class="string">'FontSize'</span>,FontSize)
+            ylabel(<span class="string">'Information Rates (nats/sec)'</span>,<span class="string">'FontSize'</span>,FontSize)
+            hold <span class="string">on</span>
+            plot(SNRdB_vec,RESULTS.(ch).(sch).SB_ILD,<span class="keyword">...</span>
+                line_style{s}{4},<span class="string">'LineWidth'</span>,LineWidth,<span class="string">'MarkerSize'</span>,MarkerSize)
+        <span class="keyword">end</span>
+        hold <span class="string">off</span>
+        legend(<span class="keyword">...</span>
+            [<span class="string">'SB JLD, Scheme '</span> num2str(scheme_pair(1))],<span class="keyword">...</span>
+            [<span class="string">'SB ILD, Scheme '</span> num2str(scheme_pair(1))],<span class="keyword">...</span>
+            [<span class="string">'SB JLD, Scheme '</span> num2str(scheme_pair(2))],<span class="keyword">...</span>
+            [<span class="string">'SB ILD, Scheme '</span> num2str(scheme_pair(2))],<span class="keyword">...</span>
+            <span class="string">'Location'</span>,<span class="string">'SouthEast'</span>)
+
+        handles = get(fig_index,<span class="string">'Children'</span>); set(handles(1),<span class="string">'FontSize'</span>,FontSizeLegend);
+
+        set(fig_index,<span class="string">'Position'</span>,[2*480 50 2*480 2*360]);figure(fig_index)
+
+        comparison = [<span class="string">'SCHEME'</span> num2str(scheme_pair(1)) <span class="string">'vs'</span> num2str(scheme_pair(2))];
+        fig_filename = [<span class="string">'RATE_'</span> ch <span class="string">'_'</span> comparison <span class="string">'.eps'</span>];
+        print(<span class="string">'-depsc'</span>, fig_filename)
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="load_batch_script_05.png" alt=""> <img vspace="5" hspace="5" src="load_batch_script_06.png" alt=""> <p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% Load Files and Compare Information Rates
+
+%% Get a batch of files (matching certain filename pattern)
+
+path = './';
+sim_file_pattern = '*.mat*';
+sim_file_list = dir([path sim_file_pattern]);
+
+%% Index the filenames by 'channel' and 'scheme'
+
+filenames = struct;
+for j=1:length(sim_file_list)
+    filename = sim_file_list(j).name;
+    % extract the channel and the scheme from the filename    
+    filename_ch = upper( filename(length('channelx')) );
+    filename_sch = filename(length('channelx_schemex'));
+    s = sprintf('File  %s : Channel %s, Scheme %s\n', filename, filename_ch, filename_sch );
+    fprintf(s)
+
+    % store filenames in a dict indexed by channel and scheme    
+    filenames.(filename_ch).(['sch' filename_sch]) = filename;
+end
+
+%% Load results from files
+
+%CHANNEL_LIST = {'A','B','C','D','E'};
+%SCHEME_LIST = {1, 2, 3};
+
+CHANNEL_LIST = {'A','E'};
+SCHEME_LIST = {1, 2};
+
+runtimes = [];
+RESULTS = struct;
+for c = 1:length(CHANNEL_LIST)
+    ch_idx = CHANNEL_LIST{c};
+    
+    RESULTS.(['CHANNEL' ch_idx]) = struct;
+    for s = 1:length(SCHEME_LIST)
+        sch_idx = SCHEME_LIST{s};
+        filename = filenames.(ch_idx).(['sch' num2str(sch_idx)]);
+        fprintf('Loading %s\n', filename)
+        load([path filename]);
+
+        % extract the information rates
+        RATES = struct;
+        RX_LIST = fieldnames(DATA.RX);
+        for r = 1:length(RX_LIST)
+            RX = RX_LIST{r};
+            RATES.(RX) = DATA.RX.(RX).RATE;
+        end
+
+        % store results            
+        RESULTS.(['CHANNEL' ch_idx]).(['SCHEME' num2str(sch_idx)]) = RATES;
+
+        %runtimes.append(DATA.get('RUNTIME')) % If no 'RUNTIME', *None* will be rerturned
+    end
+end
+RESULTS.SNRdB = DATA.SNRdB; % store once, since we run all simulations for the same SNR values
+SNRdB_vec = RESULTS.SNRdB;
+
+%% Plot information rates
+
+LineWidth = 2;
+MarkerSize = 10;
+FontSize = 17;
+FontSizeLegend = 14;
+
+line_style{1} = { 'g*-', 'bs-', 'm+-', 'rx-', 'bo-'};
+line_style{2} = { 'g*-', 'bs-', 'm+-', 'rx-', 'bo-'};
+line_style{3} = { 'g*-', 'bs-', 'm+-', 'rx-', 'bo-'};
+
+CHANNEL_LIST = {'A','E'};
+SCHEME_LIST = {1, 2};
+
+for c=1:length(CHANNEL_LIST)
+    channel_index = CHANNEL_LIST{c};
+    ch = ['CHANNEL' channel_index];
+    for s=1:length(SCHEME_LIST)
+        scheme_index = SCHEME_LIST{s};
+        sch = ['SCHEME' num2str(scheme_index)];
+        
+        fig_index = 1000+s+c*length(SCHEME_LIST);
+        set(figure(fig_index),'Name','Rate (nats/sec) vs SNR (dB)')
+        plot(SNRdB_vec,RESULTS.(ch).(sch).OPT,...
+            line_style{scheme_index}{1},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+        hold on
+        plot(SNRdB_vec,RESULTS.(ch).(sch).EB,...
+            line_style{scheme_index}{2},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+        plot(SNRdB_vec,RESULTS.(ch).(sch).SB_JLD,...
+            line_style{scheme_index}{3},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+        plot(SNRdB_vec,RESULTS.(ch).(sch).SB_ILD,...
+            line_style{scheme_index}{4},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+        hold off
+        title(['Channel ' channel_index ', Scheme ' num2str(scheme_index)])
+        xlabel('SNR (dB)','FontSize',FontSize)
+        ylabel('Information Rates (nats/sec)','FontSize',FontSize)        
+        legend(...
+            'Optimal',...
+            'EB, K=K^\prime+1',...
+            'SB, JLD',...
+            'SB, ILD',...
+            'Location','SouthEast')
+        
+        handles = get(fig_index,'Children'); set(handles(1),'FontSize',FontSizeLegend);
+        
+        set(fig_index,'Position',[2*480 50 2*480 2*360]);figure(fig_index)
+        
+        fig_filename = ['RATE_' ch '_' sch '.eps'];
+        %print('-depsc', fig_filename)
+    end
+end
+
+%% Comparing the information rates of two schemes
+
+CHANNEL_LIST = {'A','E'};
+%SCHEME_PAIR_LIST = {[1 2],[1 3],[2 3]};
+SCHEME_PAIR_LIST = {[1 2]};
+
+for c=1:length(CHANNEL_LIST)
+    channel_index = CHANNEL_LIST{c};
+    ch = ['CHANNEL' channel_index];
+    
+    for index = 1:length(SCHEME_PAIR_LIST)
+        scheme_pair = SCHEME_PAIR_LIST{index};
+        line_style{1} = { 'g*-', 'bs-', 'b+-', 'rx-', 'bo-'};
+        line_style{2} = { 'g*REPLACE_WITH_DASH_DASH', 'bsREPLACE_WITH_DASH_DASH', 'b+REPLACE_WITH_DASH_DASH', 'rxREPLACE_WITH_DASH_DASH', 'boREPLACE_WITH_DASH_DASH'};
+        for s = 1:2
+            scheme_index = scheme_pair(s);
+            sch = ['SCHEME' num2str(scheme_index)];
+            fig_index = 8000+index+c*length(SCHEME_PAIR_LIST);
+            figure(fig_index);
+            set(fig_index,'Name','R (Nats) vs SNR (dB)')
+            plot(SNRdB_vec,RESULTS.(ch).(sch).SB_JLD,...
+                line_style{s}{3},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+            title(['Channel ' channel_index])
+            xlabel('SNR (dB)','FontSize',FontSize)
+            ylabel('Information Rates (nats/sec)','FontSize',FontSize)
+            hold on
+            plot(SNRdB_vec,RESULTS.(ch).(sch).SB_ILD,...
+                line_style{s}{4},'LineWidth',LineWidth,'MarkerSize',MarkerSize)
+        end
+        hold off
+        legend(...
+            ['SB JLD, Scheme ' num2str(scheme_pair(1))],...
+            ['SB ILD, Scheme ' num2str(scheme_pair(1))],...
+            ['SB JLD, Scheme ' num2str(scheme_pair(2))],...
+            ['SB ILD, Scheme ' num2str(scheme_pair(2))],...
+            'Location','SouthEast')
+        
+        handles = get(fig_index,'Children'); set(handles(1),'FontSize',FontSizeLegend);
+        
+        set(fig_index,'Position',[2*480 50 2*480 2*360]);figure(fig_index)
+        
+        comparison = ['SCHEME' num2str(scheme_pair(1)) 'vs' num2str(scheme_pair(2))];
+        fig_filename = ['RATE_' ch '_' comparison '.eps'];
+        print('-depsc', fig_filename)
+    end
+end
+##### SOURCE END #####
+--></body></html>
